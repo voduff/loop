@@ -1,0 +1,25 @@
+# Generated build output
+/build/
+/build-*/
+/cmake-build-*/
+
+# Local audio, download output, and preferences
+*.mp3
+*.webm
+*.m4a
+*.wav
+*.part
+*.ytdl
+/downloads/
+/settings.ini
+
+# Python environments and caches
+/.venv/
+/downloader/
+__pycache__/
+*.pyc
+
+# Editor and OS files
+.DS_Store
+*.swp
+*~
