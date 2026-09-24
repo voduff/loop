@@ -641,9 +641,14 @@ struct App {
         gtk_window_set_default_size(GTK_WINDOW(window), 700, 850);
         auto* header = gtk_header_bar_new(); gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(header), TRUE);
         gtk_header_bar_set_title(GTK_HEADER_BAR(header), "loop"); gtk_window_set_titlebar(GTK_WINDOW(window), header);
-        auto* root = box(GTK_ORIENTATION_VERTICAL, 18); gtk_container_set_border_width(GTK_CONTAINER(root), 24);
-        cssClass(root, "app-body");
-        gtk_container_add(GTK_CONTAINER(window), root);
+        // Paint the full content area; keep padding on a separate inner widget.
+        // GtkContainer border-width sits outside that widget's CSS background.
+        auto* body = box(GTK_ORIENTATION_VERTICAL, 0);
+        cssClass(body, "app-body");
+        gtk_container_add(GTK_CONTAINER(window), body);
+        auto* root = box(GTK_ORIENTATION_VERTICAL, 18);
+        gtk_container_set_border_width(GTK_CONTAINER(root), 24);
+        pack(body, root, true);
         auto* brandRow = box(GTK_ORIENTATION_HORIZONTAL, 12); auto* brandText = box(GTK_ORIENTATION_VERTICAL, 3);
         pack(brandText, label("loop", "brand")); pack(brandText, label("Your sound. On repeat.", "muted")); pack(brandRow, brandText, true);
         auto* badge = label("Repeat always on", "badge"); gtk_widget_set_valign(badge, GTK_ALIGN_CENTER); pack(brandRow, badge); pack(root, brandRow);
