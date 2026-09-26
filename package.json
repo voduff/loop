@@ -1,0 +1,16 @@
+{
+  "name": "loop-desktop",
+  "productName": "loop",
+  "version": "2.0.0",
+  "private": true,
+  "description": "A focused Electron music loop player with a streamed C++ audio engine",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "postinstall": "node node_modules/electron/install.js",
+    "build": "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j2",
+    "start": "electron .",
+    "install-app": "bash install.sh"
+  },
+  "engines": { "node": ">=22.12.0" },
+  "devDependencies": { "electron": "44.4.5" }
+}

@@ -1,33 +1,36 @@
 # loop
 
-A small native C++ MP3 player for Linux. White surfaces, black controls, thin borders, and rounded corners. Uses GTK 3 and miniaudio 0.11.23; no browser runtime.
+An Electron desktop MP3 player with a small C++ audio engine. White surfaces, black controls, rounded cards, and a searchable library. Built for Linux.
 
-Open **loop** from the desktop application launcher, then press **Play**. Repeat one track, or check multiple tracks and choose **Loop checked tracks** to repeat the sequence. Minimize the window to continue listening.
+## Features
 
-- **Add MP3** opens a file picker with multiple selection.
-- **Paste path** accepts a local file path, `~/Music/...`, or a `file://` URL.
-- **Add from YouTube** accepts a video, short, or recorded live video link. Paste it and press **Download** (or Enter). Transfer progress shows percentage, size, speed, and ETA when available, followed by an MP3 conversion status. The finished MP3 is automatically saved in the library without interrupting your current track.
-- **Cancel** stops both the download and any conversion. Closing the app also cancels active downloads. Partial transfers can resume when you retry the same link. Downloads use one video per link; ongoing live streams are excluded.
-- Select a saved row to switch tracks. Switching while playing continues playback with the new track.
-- **Search** filters titles and file paths as you type, including Unicode text. Filtering never removes tracks from your loop or interrupts playback. **Ctrl+F** focuses search.
-- **Loop checked tracks** plays checked tracks in the order you checked them, shown as `#1`, `#2`, etc. After the last track, playback returns to the first. Uncheck and recheck a track to move it to the end. Clicking an unchecked track in this mode adds it to the sequence and selects it. **Next** advances through the sequence; **Loop one track** repeats only the current track.
-- **Save preset…** saves the checked track order, loop mode, current track, and volume under a name such as “Deep focus.” Select a preset from the dropdown to restore it. Sequence presets start at their first playable track; loading while paused stays paused, while loading during playback continues with the preset. Save using an existing name to update it. The trash button removes only the preset.
-- Automatic sequence playback skips unavailable files and pauses with a message if none can play. Track changes may have a brief pause; this is not gapless mixing.
-- The minus button removes a saved option; it never deletes the audio file.
-- Use the position slider to seek, the back button to restart, and the volume slider to adjust loudness.
-- **Space** toggles playback. **Ctrl+O** opens the file picker.
-- Paths, selection, volume, loop mode, checked order, and presets are saved. Startup is paused. Your existing library is preserved when upgrading.
-- **Add from YouTube** can be expanded when needed to leave more room for your library.
+- Repeat one track indefinitely, or check multiple tracks and choose **Loop checked tracks**. Tracks play in checked order, then the sequence starts again. Uncheck and recheck a track to move it to the end.
+- Search filenames and paths without changing playback. **Ctrl+F** focuses search.
+- Save named **presets** containing track order, loop mode, current track, and volume. Load, replace, or delete them from the preset controls.
+- Add MP3s with the file picker (**Ctrl+O**) or paste local paths, `~/Music/...` paths, or `file://` URLs.
+- Download a single YouTube video, Short, or recorded live video as MP3. View transfer percentage, speed, ETA, conversion status, and cancel an active download. Finished files appear in the library without interrupting playback.
+- Play/pause, seek, restart, advance to the next checked track, and adjust volume. Space toggles playback when you are not using an input or button.
+- Minimize to keep listening. Closing the app stops playback and cancels any download.
+- Removing a track or preset never deletes an audio file. Sequence playback skips unavailable files and stops with a message if none can play. Transitions may have a short pause; this is not a gapless mixer.
 
-Audio files and personal settings are not included in this repository. The original installation has “what it feels like to be a memory (playlist)” as its initial option. The installer copies that MP3 only if it exists next to the project folder. On a fresh installation, add your own MP3 or YouTube link; you can remove the original placeholder from the list if the file is absent.
+## Memory and CPU
 
-## Resource use
+Electron uses more baseline memory than the previous GTK version. This version limits avoidable overhead rather than promising GTK-level RAM usage:
 
-Audio is streamed using bounded decode buffers instead of loading the whole track into RAM. Only one track is decoded at a time, even in a multi-track loop. The audio device stops while paused. Track completion is checked four times per second during playback, while the progress display updates once per second. No playback timer runs while paused. YouTube downloading runs yt-dlp and FFmpeg in separate processes only while needed; it uses additional CPU and RAM during downloading and conversion. The GUI reads progress asynchronously. Ordinary local playback makes no network requests. GTK and the system audio backend determine the remaining baseline memory use.
+- One window with plain HTML, CSS, and JavaScript. No React, web server, webviews, remote fonts, artwork fetching, or animation loops.
+- A separate native `loop-audio` helper streams and decodes only the current track using miniaudio. MP3 files are never loaded into renderer memory, and the whole queue is not predecoded.
+- The helper starts on demand. Its input loop blocks while paused; the audio device also stops. During playback, it checks completion five times per second and reports progress once per second.
+- The renderer receives no playback progress updates while minimized. Electron background throttling stays enabled. Search/list rendering only runs on relevant user or library changes.
+- Hardware acceleration is disabled for the static interface. Renderer V8 heap growth and disk/media caches are capped; those caps are not limits on total process RAM.
+- yt-dlp and FFmpeg run only during downloading/conversion. Those operations temporarily use additional resources.
 
-## Build and install
+Runtime RAM/CPU use has not been benchmarked. The Electron migration has been compiled and packaged; playback and UI behavior have not yet been exercised.
 
-Requires CMake, a C/C++ compiler, pkg-config, GTK 3 development headers, Python 3 with venv support, and FFmpeg. Node.js is used for YouTube's JavaScript challenges when available. miniaudio is vendored, including its license at the end of `vendor/miniaudio.h`. The installer downloads yt-dlp 2026.08.19 and its default dependencies into an isolated app environment. Network access is needed for that installation and for YouTube downloads.
+## Install
+
+Requires Linux, a C/C++ compiler, CMake, pkg-config, GLib development headers, Node.js/npm, Python 3 with venv support, and FFmpeg. GTK development headers are only needed for the optional legacy frontend. Node.js also supports YouTube JavaScript challenges.
+
+On Ubuntu/Debian, the development packages are typically `build-essential cmake pkg-config libglib2.0-dev nodejs npm python3-venv ffmpeg`.
 
 ```sh
 git clone https://github.com/voduff/loop.git
@@ -35,21 +38,53 @@ cd loop
 bash install.sh
 ```
 
-The installer builds Release mode and installs for the current user:
+The installer builds the native helper, installs the locked Electron dependency, copies the Electron runtime and local app assets, prepares yt-dlp's isolated environment, and registers **loop** in your application launcher. Network access is required to obtain dependencies.
 
-- Executable: `~/.local/bin/loop`
-- Launcher: `${XDG_DATA_HOME:-~/.local/share}/applications/io.local.loop.desktop`
-- Default MP3: `${XDG_DATA_HOME:-~/.local/share}/loop/`
-- YouTube MP3s: `${XDG_DATA_HOME:-~/.local/share}/loop/downloads/`
-- YouTube helper: `${XDG_DATA_HOME:-~/.local/share}/loop/downloader/`
-- Settings: `${XDG_CONFIG_HOME:-~/.config}/loop/settings.ini`
+The app keeps Electron's process sandbox enabled. On Linux systems that restrict unprivileged user namespaces, the launcher can use an existing root-owned setuid Chromium sandbox helper. It checks common Chromium/Chrome locations and the system helper distributed with Claude Desktop. The installer does not disable the sandbox or change system-wide security settings. Systems without usable user namespaces or a system sandbox helper need an administrator to configure Chromium sandbox support.
 
-You can also open files with `loop /path/to/file.mp3`. A second invocation adds the file to the existing app window.
+For development:
 
-If YouTube changes and downloads begin failing, the helper can be updated independently:
+```sh
+npm ci
+npm run build
+npm start
+```
+
+The installed launcher includes any detected system sandbox helper configuration; `npm start` uses your development environment's sandbox configuration.
+
+## Existing library migration
+
+On first Electron launch, the native helper reads the original GLib `settings.ini` format. The app preserves paths (including Unicode and escaped characters), checked order, selected track, volume, loop mode, and saved presets in `settings.json`. **The original INI file is left untouched.** Later launches use JSON. Startup remains paused.
+
+Audio files and personal settings are not included in this repository. If the original downloaded “what it feels like to be a memory (playlist)” MP3 exists next to the project folder, the installer can copy it as an initial option. Otherwise add your own files or YouTube links.
+
+Installed locations (respecting `XDG_DATA_HOME` / `XDG_CONFIG_HOME`):
+
+- Launcher: `~/.local/bin/loop`
+- Desktop entry: `~/.local/share/applications/io.local.loop.desktop`
+- App and native helper: `~/.local/share/loop/electron-app/`
+- Electron runtime: `~/.local/share/loop/electron-<version>/`
+- Downloaded MP3s: `~/.local/share/loop/downloads/`
+- Downloader environment: `~/.local/share/loop/downloader/`
+- Settings: `~/.config/loop/settings.json`
+- Original settings backup: `~/.config/loop/settings.ini`
+
+Open files using `loop /path/to/file.mp3`. Subsequent Electron invocations add files to the existing window.
+
+## Source layout
+
+- `electron/`: main process, sandboxed preload bridge, local HTML/CSS/JS interface.
+- `src/backend.cpp`: audio command transport and original settings import.
+- `src/player.hpp`, `src/audio.c`: streamed miniaudio playback.
+- `vendor/miniaudio.h`: miniaudio 0.11.23, with its upstream license included.
+- `src/main.cpp`, `src/downloader.hpp`: retained GTK frontend. Build it with `cmake -S . -B build -DLOOP_BUILD_LEGACY=ON` and `cmake --build build -j2`; the optional binary is `build/loop-gtk`.
+
+The renderer has no Node access, context isolation and sandboxing stay enabled, IPC is checked against the app's main frame, and only packaged assets load through the local `loop://` protocol. Downloads run outside the renderer, using argument arrays rather than shell commands.
+
+If YouTube changes and downloads fail, update the helper independently:
 
 ```sh
 "${XDG_DATA_HOME:-$HOME/.local/share}/loop/downloader/bin/python" -m pip install --upgrade 'yt-dlp[default]'
 ```
 
-The app displays download errors inline; hover over the message for full details. Videos requiring sign-in or otherwise unavailable may fail to download.
+Videos requiring sign-in or otherwise unavailable may fail. Download errors are displayed in the app.

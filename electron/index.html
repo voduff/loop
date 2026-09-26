@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>loop</title><link rel="stylesheet" href="style.css"><script src="renderer.js" defer></script>
+</head>
+<body>
+<svg class="symbols" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h4v14H7zm7 0h4v14h-4z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-next" viewBox="0 0 24 24"><path d="m5 5 11 7-11 7z" fill="currentColor" stroke="none"/><path d="M19 5v14"/></symbol>
+<symbol id="i-restart" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></symbol>
+<symbol id="i-volume" viewBox="0 0 24 24"><path d="m11 5-5 4H3v6h3l5 4zM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+<symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13M9 8l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2.5"/><ellipse cx="17" cy="16" rx="3" ry="2.5"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7m4-7v7"/></symbol>
+</defs></svg>
+<div class="shell">
+<header class="brand"><div><h1>loop</h1><p>Your sound. On repeat.</p></div><span class="badge">∞ <span>Repeat always on</span></span></header>
+<main>
+<section class="player" aria-label="Audio player">
+<div class="card-top"><span class="eyebrow" id="status">READY WHEN YOU ARE</span><span class="infinity" aria-hidden="true">∞</span></div>
+<h2 id="track-title">Make yourself a loop</h2><p class="path" id="track-path">Add an MP3 to get started.</p>
+<input id="seek" class="seek" type="range" min="0" max="1" step="1" value="0" aria-label="Playback position" disabled>
+<div class="times"><span id="elapsed">0:00</span><span id="duration">—:——</span></div>
+<div class="transport">
+<button id="restart" class="icon-button" title="Restart track" aria-label="Restart track" disabled><svg><use href="#i-restart"/></svg></button>
+<button id="play" class="primary play" disabled><svg><use id="play-icon" href="#i-play"/></svg><span id="play-label">Play</span></button>
+<button id="next" class="icon-button" title="Next track in loop" aria-label="Next track" disabled><svg><use href="#i-next"/></svg></button>
+<div class="volume"><svg aria-hidden="true"><use href="#i-volume"/></svg><input id="volume" type="range" min="0" max="100" step="1" value="65" aria-label="Volume" title="Volume"></div>
+</div>
+</section>
+<details class="youtube" id="youtube"><summary>Add from YouTube <span>＋</span></summary><div class="download-content">
+<form id="download-form" class="input-row"><input id="youtube-url" type="text" placeholder="Paste a YouTube video link" aria-label="YouTube video link" autocomplete="off"><button id="download" class="primary">Download</button><button id="cancel-download" type="button" hidden>Cancel</button></form>
+<progress id="download-progress" max="1" value="0" hidden aria-label="Download progress"></progress><p class="hint" id="download-status" role="status">Downloads an MP3 and adds it to your library.</p>
+</div></details>
+<section class="library" aria-label="Your tracks">
+<div class="section-heading"><h2>Your tracks</h2><div class="buttons"><button id="paste">Paste path</button><button id="browse">+ Add MP3</button></div></div>
+<div class="search-field"><svg aria-hidden="true"><use href="#i-search"/></svg><input id="search" type="search" placeholder="Search tracks or file paths…" aria-label="Search library" autocomplete="off"></div>
+<div class="mode-row"><select id="mode" aria-label="Loop mode"><option value="one">Loop one track</option><option value="multiple">Loop checked tracks</option></select><span class="hint" id="queue-count">Check tracks in play order</span></div>
+<div class="preset-row"><label for="preset">Preset</label><select id="preset"><option value="">Custom selection</option></select><button id="save-preset">Save preset…</button><button id="delete-preset" class="icon-button" aria-label="Delete preset" title="Delete preset; keeps audio files" disabled><svg><use href="#i-trash"/></svg></button></div>
+<div id="tracks" class="tracks" role="list" aria-label="Saved audio tracks"></div><p id="empty" class="empty">Add your first MP3 above.</p>
+<div class="library-bottom"><span class="hint" id="count">0 saved tracks</span><button id="remove" class="icon-button" aria-label="Remove selected track from library" title="Remove selected path; keeps the file" disabled>−</button></div>
+</section>
+</main>
+<div id="notice-box" class="notice" hidden><span id="notice" role="status"></span><button id="dismiss" aria-label="Dismiss message">×</button></div>
+<footer>Space to play / pause <span>·</span> Ctrl+F to search <span>·</span> Minimize to keep looping</footer>
+</div>
+<dialog id="prompt"><form id="prompt-form"><h2 id="prompt-title"></h2><p id="prompt-description"></p><input id="prompt-input" required autocomplete="off"><div class="dialog-actions"><button type="button" id="prompt-cancel">Cancel</button><button class="primary" id="prompt-submit">Save</button></div></form></dialog>
+</body></html>
